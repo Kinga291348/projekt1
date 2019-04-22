@@ -1,0 +1,237 @@
+from PyQt5.QtWidgets import QWidget,QMessageBox,QColorDialog, QPushButton, QApplication, QLabel, QLineEdit, QGridLayout
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import sys
+import matplotlib.pyplot as plt
+
+class Window(QWidget): #zdefiniowanie klas
+	def __init__(self):
+		QWidget.__init__(self)
+        
+		self.button = QPushButton('Licz', self) #zdefiniowanie przycisków
+		self.clrChoose=QPushButton('kolor punktu', self)
+		self.zapisz = QPushButton('zapisz wynik', self)
+		self.Zeruj = QPushButton("Wyzeruj", self)
+		self.tytlabel = QLabel("Wyznaczanie punktu przecięcia dwóch odcinków", self)
+                
+		self.xlabel = QLabel("XA", self) #zdefiniowanie przycisków i miejsc, gdzie zostaną wprowadzone współrzędne przez użytkownika
+		self.xEdit = QLineEdit()
+		self.ylabel = QLabel("YA", self)
+		self.yEdit = QLineEdit()
+		self.xlabel1 = QLabel("XB", self)
+		self.xEdit1 = QLineEdit()
+		self.ylabel1 = QLabel("YB", self)
+		self.yEdit1 = QLineEdit()
+		self.xlabel2 = QLabel("XC", self)
+		self.xEdit2 = QLineEdit()
+		self.ylabel2 = QLabel("YC", self)
+		self.yEdit2 = QLineEdit()
+		self.xlabel3 = QLabel("XD", self)
+		self.xEdit3 = QLineEdit()
+		self.ylabel3 = QLabel("YD", self)
+		self.yEdit3 = QLineEdit()
+		self.xlabel4 = QLabel("XP", self)
+		self.xEdit4 = QLineEdit()       
+		self.ylabel4= QLabel("YP", self)
+		self.yEdit4 = QLineEdit()
+        
+		self.figure = plt.figure()#zdefiniowanie miejsca gdzie pojawi się wykres
+		self.canvas = FigureCanvas(self.figure)
+        
+        # ladne ustawienie i wysrodkowanie
+		layout =  QGridLayout(self)
+        
+		layout.addWidget(self.tytlabel, 1,1) # zdefiniowanie położenia tekstów opisujących a także miejsca, gdzie zostaną wprowadzone dane przez użytkownika
+        
+		layout.addWidget(self.xlabel, 2, 0)
+		layout.addWidget(self.xEdit, 2, 1)
+		layout.addWidget(self.ylabel, 3, 0)
+		layout.addWidget(self.yEdit, 3, 1)
+		layout.addWidget(self.xlabel1, 4, 0)
+		layout.addWidget(self.xEdit1, 4, 1)
+		layout.addWidget(self.ylabel1, 5, 0)
+		layout.addWidget(self.yEdit1, 5, 1)
+		layout.addWidget(self.xlabel2, 6, 0)
+		layout.addWidget(self.xEdit2, 6, 1)
+		layout.addWidget(self.ylabel2, 7, 0)
+		layout.addWidget(self.yEdit2, 7, 1)
+		layout.addWidget(self.xlabel3, 8, 0)
+		layout.addWidget(self.xEdit3, 8, 1)
+		layout.addWidget(self.ylabel3, 9, 0)
+		layout.addWidget(self.yEdit3, 9, 1)
+        
+		layout.addWidget(self.button, 10, 1, 1, -1) 
+		layout.addWidget(self.canvas, 13, 1, 1, -1)
+		layout.addWidget(self.clrChoose,14, 1, 1, -1)
+		layout.addWidget(self.zapisz,15, 1, 1,-1)
+		layout.addWidget(self.Zeruj,16,1,1,-1)
+		layout.addWidget(self.xlabel4, 11, 0)
+		layout.addWidget(self.xEdit4, 11, 1)
+		layout.addWidget(self.ylabel4, 12, 0)
+		layout.addWidget(self.yEdit4, 12, 1)        
+        # połączenie przycisku (signal) z akcją (slot)
+		self.button.clicked.connect(self.handleButton) 
+		self.clrChoose.clicked.connect(self.clrChooseF)
+		self.zapisz.clicked.connect(self.zapis)
+		self.Zeruj.clicked.connect(self.zero)
+    
+	def checkValues(self,lineE): #funkcja sprawdzająca poprawnoć wprowadzonych wartosci
+		if lineE.text().lstrip('-').replace('.','').isdigit():
+			return float(lineE.text())
+		else:
+			return None
+        
+	def licz(self, clr='r', clr1='b'):
+		xa = self.checkValues(self.xEdit)#wczytywanie danych z konsoli i ich kontrola
+		ya =self.checkValues(self.yEdit)
+		xb = self.checkValues(self.xEdit1)
+		yb =self.checkValues(self.yEdit1)
+		xc = self.checkValues(self.xEdit2)
+		yc =self.checkValues(self.yEdit2)
+		xd = self.checkValues(self.xEdit3)
+		yd =self.checkValues(self.yEdit3)
+		
+		dXab=xb-xa #obliczanie delty
+		dYab=yb-ya
+		dXcd=xd-xc
+		dYcd=yd-yc
+		dXac=xc-xa
+		dYac=yc-ya
+        
+		t1g=dXac*dYcd-dYac*dXcd
+		t2g=dXac*dYab-dYac*dXab
+		td=dXab*dYcd-dYab*dXcd
+        
+		if td ==0 : #okienko, które wyskakuje w przypadku niemożliwoci wykonywania obliczeń
+			QMessageBox.warning(self, "Błąd", "Dzielenie przez 0!", QMessageBox.Ok)
+		else:
+			t1=t1g/td
+			t2=t2g/td
+        
+        
+        #Rozwiązanie - wspólrzedne pkt P
+        
+		xp1=round(xa+t1*dXab,3) #zaokrąglenie do 3 miejsc po przecinku
+		yp1=round(ya+t1*dYab,3)
+		xp2=round(xc+t2*dXcd,3)
+		yp2=round(yc+t2*dYcd,3)
+        
+		if xp1==xp2 and yp1==yp2:
+			self.xEdit4.setText(str(xp1)) #załączenie by w aplikacji ukazywały sie współrzędne punktów
+			self.yEdit4.setText(str(yp1))
+		else:
+			 QMessageBox.warning(self, "Błąd", "Błędne dane", QMessageBox.Ok)
+            
+        
+		if xa!=None and ya!=None: # tworzenie wykresu
+			ax = self.figure.add_subplot(111)
+			ax.plot(xa, ya, 'o', color=clr)
+			self.canvas.draw()
+            
+		if xb!=None and yb!=None:
+			bx = self.figure.add_subplot(111)
+			bx.plot(xb, yb, 'o', color=clr)
+			self.canvas.draw()        
+
+		if xc!=None and yc!=None:
+			cx = self.figure.add_subplot(111)
+			cx.plot(xc, yc, 'o', color=clr)
+			self.canvas.draw()
+            
+		if xd!=None and yd!=None:
+			dx = self.figure.add_subplot(111)
+			dx.plot(xd, yd, 'o', color=clr)
+			self.canvas.draw()
+
+		if xp1!=None and yp1!=None:
+			p1x = self.figure.add_subplot(111)
+			p1x.plot(xp1, yp1, 'o', color=clr)
+			self.canvas.draw()
+		
+		Xab=[xa,xb]
+		Yab=[ya,yb]
+		Xcd=[xc,xd]
+		Ycd=[yc,yd] 
+        
+		if Xab!=None and Yab!=None:
+			p1x = self.figure.add_subplot(111)
+			p1x.plot(Xab,Yab, color=clr1)
+			self.canvas.draw()
+            
+		if Xcd!=None and Ycd!=None:
+			p1x = self.figure.add_subplot(111)
+			p1x.plot(Xcd,Ycd, color=clr1)
+			self.canvas.draw()
+            
+            
+	def handleButton(self): # funkca uruchamiająca powyzsze funkcje
+		self.licz()
+		self.figure.clear()
+
+       
+	def clrChooseF(self): # funkcja umożliwiająca wybór koloru wykresu
+		color=QColorDialog.getColor()
+		if color.isValid():
+			self.licz(color.name())
+		else:
+			pass
+        
+	def zapis(self): # funkcja umożliwiająca zapis wyniku do pliku 
+		xa = self.checkValues(self.xEdit)
+		ya =self.checkValues(self.yEdit)
+		xb = self.checkValues(self.xEdit1)
+		yb =self.checkValues(self.yEdit1)
+		xc = self.checkValues(self.xEdit2)
+		yc =self.checkValues(self.yEdit2)
+		xd = self.checkValues(self.xEdit3)
+		yd =self.checkValues(self.yEdit3)
+		
+		dXab=xb-xa
+		dYab=yb-ya
+		dXcd=xd-xc
+		dYcd=yd-yc
+		dXac=xc-xa
+		dYac=yc-ya
+        
+		t1g=dXac*dYcd-dYac*dXcd
+		t2g=dXac*dYab-dYac*dXab
+		td=dXab*dYcd-dYab*dXcd
+        
+		t1=t1g/td
+		t2g/td
+        
+		xp1=round(xa+t1*dXab,3)
+		yp1=round(ya+t1*dYab,3)
+        
+		XP = xp1 * 1000 # mm
+		YP = yp1 * 1000 # mm
+        
+		plik = open('projekt_1.txt', "a") 
+		plik.write(38 * '-')
+		plik.write("\n| {} | {:^8s} | {:^8s} |\n".format("Nazwa punktu", "X [mm]", "Y [mm]"))
+		plik.write(38 * '-')
+		plik.write("\n| {:^12} | {:^8.0f} | {:^8.0f} |\n".format("P", XP, YP))
+		plik.write(38 * '-')
+		plik.close()
+        
+	def zero(self):        
+		self.xEdit.clear()
+		self.yEdit.clear()
+		self.xEdit1.clear()
+		self.yEdit1.clear()
+		self.xEdit2.clear()
+		self.yEdit2.clear()
+		self.xEdit3.clear()
+		self.yEdit3.clear()
+		self.xEdit4.clear()     
+		self.yEdit4.clear()       
+        
+        
+        
+if __name__ == '__main__':
+    if not  QApplication.instance():
+        app=QApplication(sys.argv)
+    else:
+        app=QApplication.instance()
+    window = Window()
+    window.show()
+    sys.exit(app.exec_())
